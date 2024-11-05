@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "django-mail-client"
+version = "0.0.1"
+description = "Django mail client, that working over websockets"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+django = "^4.2"
+channels = "4.0.0"
+channels-redis = "4.1.0"
+daphne = "4.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
