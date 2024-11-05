@@ -1,0 +1,39 @@
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Django
+*.log
+*.sqlite3
+db.sqlite3
+/media
+/staticfiles
+
+# Environment variables
+.env
+*.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Pytest
+.cache
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Migrations
+*/migrations/*.py
+*/migrations/*.pyc
+!*/migrations/__init__.py
+
+# Other
+*.DS_Store
+*.egg-info/
+dist/
+build/
+
