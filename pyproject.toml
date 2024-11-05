@@ -2,7 +2,7 @@
 name = "django-mail-client"
 version = "0.0.1"
 description = "Django mail client, that working over websockets"
-authors = ["Your Name <you@example.com>"]
+authors = ["Raphael Golubev <raphael.golubev@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
