@@ -3,12 +3,12 @@
 import os
 import sys
 
-from src.utils.create_admin import create_admin
+from core.utils.create_admin import create_admin
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'src.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

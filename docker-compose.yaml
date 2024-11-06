@@ -51,8 +51,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - type: bind
-        source: ./src
-        target: /app/src
+        source: ./core
+        target: /app/core
     ports:
       - "${APP_PORT}:${APP_PORT}"
     env_file:
