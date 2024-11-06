@@ -53,6 +53,9 @@ services:
       - type: bind
         source: ./core
         target: /app/core
+      - type: bind
+        source: ./main
+        target: /app/main
     ports:
       - "${APP_PORT}:${APP_PORT}"
     env_file:
