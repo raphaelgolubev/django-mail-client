@@ -3,8 +3,6 @@
 import os
 import sys
 
-from core.utils.create_admin import create_admin
-
 
 def main():
     """Run administrative tasks."""
@@ -22,4 +20,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    create_admin()

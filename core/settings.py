@@ -13,6 +13,28 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
+
+
+__REDIS_HOST = 'redis://' + os.environ.get('REDIS_HOST', '127.0.0.1')
+__REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+
+
+# Celery Settings
+CELERY_BROKER_URL = f'{__REDIS_HOST}:{__REDIS_PORT}/0'
+CELERY_RESULT_BACKEND = f'{__REDIS_HOST}:{__REDIS_PORT}/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_BEAT_SCHEDULE = {
+#     'fetch-emails-every-2-minutes': {
+#         'task': 'main.tasks.fetch_and_send_emails',
+#         'schedule': crontab(minute='*/2'),  # Каждые 10 минут
+#     },
+# }
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -34,6 +56,7 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 INSTALLED_APPS = [
     'daphne',
     'channels',
+    'django_celery_beat',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -72,13 +95,11 @@ TEMPLATES = [
 ]
 
 ASGI_APPLICATION ='core.asgi.application'
-# WSGI_APPLICATION = 'core.wsgi.application'
-
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [(os.environ.get('REDIS_HOST', '127.0.0.1'), int(os.environ.get('REDIS_PORT', 6379)))],
+            "hosts": [(os.environ.get('REDIS_HOST', '127.0.0.1'), __REDIS_PORT)],
         },
     },
 }

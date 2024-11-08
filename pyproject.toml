@@ -13,6 +13,10 @@ channels = "4.0.0"
 channels-redis = "4.1.0"
 daphne = "4.0.0"
 psycopg2-binary = "^2.9.10"
+celery = "^5.4.0"
+django-celery-beat = "^2.7.0"
+aioimaplib = "^1.1.0"
+flower = "^2.0.1"
 
 
 [build-system]

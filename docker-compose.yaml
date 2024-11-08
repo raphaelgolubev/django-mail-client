@@ -41,10 +41,12 @@ services:
       - pg_volume:/var/lib/postgresql/data
 
   django:
+    container_name: django-container
     stdin_open: true
     tty: true
     command: >
-      bash -c "python3 manage.py migrate &&
+      bash -c "python3 manage.py makemigrations &&
+      python3 manage.py migrate &&
       python3 manage.py runserver ${APP_HOST}:${APP_PORT}"
     build: 
       context: .
@@ -56,6 +58,9 @@ services:
       - type: bind
         source: ./main
         target: /app/main
+      - type: bind
+        source: ./logs
+        target: /app/logs
     ports:
       - "${APP_PORT}:${APP_PORT}"
     env_file:
