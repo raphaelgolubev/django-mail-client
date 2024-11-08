@@ -181,7 +181,7 @@
                     const progressValue = 100 - percentValue; // Вычисляем значение для progressBar
 
                     $('#' + pg).css('width', progressValue + '%').attr('aria-valuenow', progressValue);
-                    $('#pb-countdown-' + account_id).text(receiveData.email.id + ' из ' + receiveData.total);
+                    $('#pb-countdown-' + account_id).text((receiveData.email.id - 1) + ' из ' + receiveData.total);
                 }
             }
         };

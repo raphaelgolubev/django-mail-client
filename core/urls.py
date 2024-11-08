@@ -25,5 +25,4 @@ urlpatterns = [
     path('', views.index, name='home'),
     path('add_account/', views.add_account, name='add_email_account'),
     path('delete_account/', views.delete_account, name='delete_email_account'),
-    path('create_task/', views.create_task, name='create_task'),
 ]
