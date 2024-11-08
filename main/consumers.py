@@ -2,7 +2,7 @@ import json
 import asyncio
 
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
 from django.forms.models import model_to_dict
 
 from main.services import IMAPService

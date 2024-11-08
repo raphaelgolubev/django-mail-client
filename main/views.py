@@ -3,21 +3,12 @@ from django.http import JsonResponse
 from django.forms.models import model_to_dict
 
 from main.models import Account
-from main.tasks import create_celery_task
 
 
 # Create your views here.
 def index(request):
     accounts = Account.objects.all()  # Получаем все аккаунты из базы данных
     return render(request, 'index.html', {'accounts': accounts})  # Передаем аккаунты в контекст
-
-
-def create_task(request):
-    if request.method == 'POST':
-        task_type = request.POST.get('type')
-        create_celery_task.delay(int(task_type))  # Создаем задачу в Celery
-        
-    return JsonResponse({'status':'success'})
 
 
 async def add_account(request):

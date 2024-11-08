@@ -137,16 +137,3 @@ class IMAPService:
     async def logout(self):
         print("Closing connection")
         await self.client.logout()
-
-    # async def __aenter__(self):
-    #     self.client = await self.__connect_imap()
-    #     return self
-
-    # async def __aexit__(self, exc_type, exc_val, exc_tb):
-    #     if exc_type:
-    #         print(f"Произошла ошибка: {exc_val} (тип: {exc_type})")
-    #         print(exc_tb)
-    #         raise
-        
-    #     await self.logout()
-    #     return True
