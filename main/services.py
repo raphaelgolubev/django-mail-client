@@ -135,5 +135,5 @@ class IMAPService:
         return self
 
     async def logout(self):
-        print("Closing connection")
+        print("Closing IMAP connection")
         await self.client.logout()
