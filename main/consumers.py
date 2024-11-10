@@ -31,7 +31,7 @@ class EmailConsumer(AsyncWebsocketConsumer):
     async def handle_action(self, data: dict):
         action_type = data.get('action')
         
-        if action_type == 'get_messages':
+        if action_type == 'start_imap_read':
             await self.get_messages()
     
     def get_id(self, letter):
@@ -62,6 +62,16 @@ class EmailConsumer(AsyncWebsocketConsumer):
         return r
 
     async def save(self, account):
+        async def done():
+            await imap.logout()
+            await self.send_json({
+                "status": "done",
+                "total": total_emails,
+                "percent": 100,
+                "account_id": account.id,
+                "email": account.email
+            })
+        
         imap = await IMAPService(
             email=account.email, 
             password=account.password, 
@@ -98,16 +108,16 @@ class EmailConsumer(AsyncWebsocketConsumer):
                 }
                 
                 await self.send_json(send_data)
-            await imap.logout()
+            await done()
         else:
-            await self.send_json({"status": "all emails received"})
+            await done()
     
     async def get_messages(self):
         await self.send_json({"status": "pending..."})
-        
         accounts = await self.get_accounts()
-        tasks = [self.save(a) for a in accounts]
         
-        asyncio.gather(*tasks)
+        loop = asyncio.get_event_loop()
+        tasks = [loop.create_task(self.save(a)) for a in accounts]
         
-        # await self.disconnect()
+        await asyncio.gather(*tasks)
+        await self.close()
