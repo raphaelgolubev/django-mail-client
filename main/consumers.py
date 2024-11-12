@@ -8,6 +8,7 @@ from django.forms.models import model_to_dict
 from main.services import IMAPService
 from main.models import Account, Letter
 
+
 class EmailConsumer(AsyncWebsocketConsumer):
     def percentage(self, value: int, total: int):
         result = (int(value) / total) * 100
