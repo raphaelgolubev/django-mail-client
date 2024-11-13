@@ -129,8 +129,11 @@ class IMAPService:
             )
 
     async def connect(self):
-        self.client = await self.__connect_imap()
-        return self
+        imap_ssl = await self.__connect_imap()
+        if imap_ssl:
+            self.client = imap_ssl
+            return True
+        return False
 
     async def logout(self):
         print("Closing IMAP connection")
