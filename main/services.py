@@ -1,10 +1,10 @@
-import aioimaplib
 from dataclasses import dataclass
-
 from email import message_from_bytes, policy
 from email.header import decode_header
 from email.message import EmailMessage
 from email.parser import BytesParser
+
+import aioimaplib
 
 import core.utils.format_string as utils
 

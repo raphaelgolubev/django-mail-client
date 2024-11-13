@@ -1,12 +1,12 @@
-import json
 import asyncio
+import json
 
-from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.forms.models import model_to_dict
 
-from main.services import IMAPService
 from main.models import Account, Letter
+from main.services import IMAPService
 
 
 class EmailConsumer(AsyncWebsocketConsumer):

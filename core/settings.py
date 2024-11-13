@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
-
 __REDIS_HOST = "redis://" + os.environ.get("REDIS_HOST", "127.0.0.1")
 __REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 
