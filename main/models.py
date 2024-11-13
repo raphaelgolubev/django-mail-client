@@ -3,16 +3,16 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class Account(models.Model):
-    """ Модель аккаунта почты """
+    """Модель аккаунта почты"""
 
     email = models.EmailField(max_length=100, unique=True)
     password = models.CharField(max_length=100)
-    imap_server = models.CharField(max_length=100, default='imap.default.com')
+    imap_server = models.CharField(max_length=100, default="imap.default.com")
     imap_port = models.IntegerField(default=993)
 
 
 class Letter(models.Model):
-    """ Модель электронного письма """
+    """Модель электронного письма"""
 
     email_account = models.ForeignKey(Account, on_delete=models.CASCADE)
     message_id = models.CharField(unique=True, max_length=20)
