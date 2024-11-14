@@ -7,16 +7,12 @@ from main.models import Account
 
 def index(request):
     accounts = Account.objects.all()  # Получаем все аккаунты из базы данных
-    return render(
-        request, "accounts.html", {"accounts": accounts}
-    )
+    return render(request, "accounts.html", {"accounts": accounts})
 
 
 def messages_page(request, account_id):
     account = Account.objects.get(id=account_id)
-    return render(
-        request, "messages.html", {"account": account}
-    )
+    return render(request, "messages.html", {"account": account})
 
 
 async def add_account(request):
