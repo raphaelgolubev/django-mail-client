@@ -5,12 +5,18 @@ from django.shortcuts import render
 from main.models import Account
 
 
-# Create your views here.
 def index(request):
     accounts = Account.objects.all()  # Получаем все аккаунты из базы данных
     return render(
-        request, "index.html", {"accounts": accounts}
-    )  # Передаем аккаунты в контекст
+        request, "accounts.html", {"accounts": accounts}
+    )
+
+
+def messages_page(request, account_id):
+    account = Account.objects.get(id=account_id)
+    return render(
+        request, "messages.html", {"account": account}
+    )
 
 
 async def add_account(request):

@@ -23,6 +23,7 @@ from main import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.index, name="home"),
+    path("account/<int:account_id>", views.messages_page, name="messages"),
     path("add_account/", views.add_account, name="add_email_account"),
     path("delete_account/", views.delete_account, name="delete_email_account"),
 ]
