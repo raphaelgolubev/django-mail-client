@@ -1,6 +1,7 @@
 .progress-custom {
     height: 50px;
 }
+
 .bar-countdown {
     display: contents;
     color: white; /* Цвет текста */
@@ -9,16 +10,49 @@
     padding: 5px; /* Отступы */
     text-align: center; /* Выравнивание текста по центру */
 }
+
 .item {
     border: 1px solid #dee2e6;
     padding: 1rem;
     border-radius: 10px;
     margin-bottom: 1rem;
 }
+
 .my-badge {
     text-align: center !important;
     margin-left: 1rem !important;
     vertical-align: middle !important;
     display: inline-flex !important;
     font-size: large !important;
+}
+
+.header-panel {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+}
+
+.header-panel-account {
+    overflow: auto;
+    margin-top: 3rem;
+    margin-bottom: 2.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+}
+
+.header-panel-account :first-child {
+    font-size: 1.55rem;
+}
+
+.view-account-button {
+    padding: 1rem;
+    margin-right: 0.5rem;
+}
+
+.delete-account-button {
+    padding: 1rem;
+    margin-left: 0.5rem;
+}
+
+#progress-message {
+    margin-left: 0.5rem;
 }
