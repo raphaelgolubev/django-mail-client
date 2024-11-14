@@ -38,35 +38,27 @@ $('#add-account-form').on('submit', function(event) {
             if (response.status === 'success') {
                 const account = response.account;
                 $('#account-list').append(`
-                    <div class="item d-flex justify-content-start align-content-stretch flex-wrap">
-                        <div class="d-flex align-items-center">
-                            <div id="progress-container-${account.id}" class="progress progress-circular" style="--percentage: 0">
-                                <div class="progress-bar"></div>
-                                <div id="plabel-${account.id}" ,="" class="progress-label">0%</div>
-                            </div>
-                        </div>
-                    
-                        <div class="d-flex justify-content-center align-items-center flex-grow-1">
-                            <span class="badge badge-primary my-badge">
-                                ${account.email} (ID: ${account.id}, IMAP: ${account.imap_server}, Порт: ${account.imap_port})
-                            </span>
+                    <div class="item d-flex justify-content-start align-content-stretch flex-wrap">                    
+                    <div class="d-flex justify-content-left align-items-center flex-grow-1">
+                        <span class="badge badge-primary my-badge">
+                            ${account.email} (ID: ${account.id}, IMAP: ${account.imap_server}, Порт: ${account.imap_port})
+                        </span>
+                    </div>
 
-                            <span id="progress-message-${account.id}" class="badge badge-success my-badge">
-                                0 из 0
-                            </span>
-                        </div>
-                
-                        <button data-id="${account.id}" class="btn btn-danger btn-sm float-right delete-account-button">
+                    <div class="d-flex">
+                        <button data-id="${account.id}" class="btn btn-primary btn-sm view-account-button">
+                            <i class="fas fa-arrow-right"></i> Перейти в почту
+                        </button>
+                    
+                        <button data-id="${account.id}" class="btn btn-danger btn-sm delete-account-button">
                             <i class="fas fa-trash"></i> Удалить
                         </button>
                     </div>
+                </div>
                 `);
                 
                 // Закрываем модальное окно
                 $('#addAccountModal').modal('hide');
-
-                // Перезагружаем страницу
-                // window.location.reload();
             }
         },
         error: function() {
