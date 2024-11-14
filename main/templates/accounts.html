@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аккаунты</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mdb.min.css' %}">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="d-flex header-panel">
+            <h2 class="flex-fill">Добавленные аккаунты</h2>
+            <button class="btn btn-success" id="add-account-button" data-toggle="modal" data-target="#addAccountModal">
+                <i class="fas fa-plus"></i> Добавить аккаунт
+            </button>
+        </div>
+        <div id="account-list">
+            {% for account in accounts %}
+                <div class="item d-flex justify-content-start align-content-stretch flex-wrap">                    
+                    <div class="d-flex justify-content-left align-items-center flex-grow-1">
+                        <span class="badge badge-primary my-badge">
+                            {{ account.email }} (ID: {{ account.id }}, IMAP: {{ account.imap_server }}, Порт: {{ account.imap_port }})
+                        </span>
+                    </div>
+
+                    <div class="d-flex">
+                        <button data-id="{{ account.id }}" class="btn btn-primary btn-sm view-account-button">
+                            <i class="fas fa-arrow-right"></i> Перейти в почту
+                        </button>
+                    
+                        <button data-id="{{ account.id }}" class="btn btn-danger btn-sm delete-account-button">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+    <!-- Модальное окно для добавления аккаунта -->
+    <div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAccountModalLabel">Добавить аккаунт</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="add-account-form" method="post" action="add_account/">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" name="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Пароль</label>
+                            <input type="password" class="form-control" name="password" id="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="imap_server">IMAP сервер</label>
+                            <input type="text" class="form-control" name="imap_server" id="imap_server">
+                        </div>
+                        <div class="form-group">
+                            <label for="imap_port">IMAP порт</label>
+                            <input type="number" class="form-control" name="imap_port" id="imap_port" value="993">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary" id="submit-account-button">Добавить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/jquery-3.5.1.min.js' %}"></script>
+    <script src="{% static 'js/mdb.umd.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <script>
+        // Обработчик для кнопок "Перейти в почту"
+        $(document).on('click', '.view-account-button', function() {
+            const accountId = $(this).data('id'); // Получаем ID аккаунта из атрибута data-id
+            // Открывем в новой вкладке
+            window.open('/account/' + accountId, '_blank'); // Открываем в новой вкладке
+        });
+
+        // Обработчик для кнопок "Удалить"
+        $(document).on('click', '.delete-account-button', function() {
+            const accountId = $(this).data('id'); // Получаем ID аккаунта из атрибута data-id
+
+            if (confirm('Вы уверены, что хотите удалить этот аккаунт?')) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/delete_account/', // URL для удаления аккаунта
+                    data: {
+                        'id': accountId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}' // Добавляем CSRF токен
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $(this).closest('.item').remove(); // Удаляем элемент списка
+                            window.location.reload(); // Перезагружаем страницу
+                        } else {
+                            alert(response.message);
+                        }
+                    }.bind(this),
+                    error: function() {
+                        alert('Произошла ошибка при удалении аккаунта.');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
