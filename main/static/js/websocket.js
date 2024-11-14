@@ -16,9 +16,10 @@ function createWebSocket(host, port, route) {
  * 
  * @param {WebSocket} webSocket - объект вебсокета
  * @param {string} name - имя действия
+ * @param {Object} param - параметры действия
  */
-function sendAction(webSocket, name) {
-    action = JSON.stringify({action: name})
+function sendAction(webSocket, name, param = {}) {
+    const action = JSON.stringify({action: name, ...param}); // Объединяем объект с параметрами
     webSocket.send(action);
 
     console.log('Отправлено:', action);
@@ -34,16 +35,16 @@ function parseMessage(event) {
     return JSON.parse(event.data);
 }
 
-/**
- * Извлекает идентификатор письма из строки вида "10.1", где
- * 10 - идентификатор аккаунта в БД, 1 - идентификатор письма
- */
-function extractMessageId(message) {
-    id = message.email.message_id.split('.')[1];
-    result = (message.total + 1) - id;
+// /**
+//  * Извлекает идентификатор письма из строки вида "10.1", где
+//  * 10 - идентификатор аккаунта в БД, 1 - идентификатор письма
+//  */
+// function extractMessageId(message) {
+//     id = message.email.message_id.split('.')[1];
+//     result = (message.total + 1) - id;
 
-    return result;
-}
+//     return result;
+// }
 
 /**
  * Добавляет строку в таблицу
@@ -53,7 +54,7 @@ function extractMessageId(message) {
  */
 function addEmailRow(selector, message) {
     // Идентификатор письма
-    let email_id = message.email.id; //extractMessageId(message);
+    let email_id = message.email.message_id;
     // Тема письма
     let subject = message.email.subject;
     // Содержание письма
@@ -77,60 +78,43 @@ function addEmailRow(selector, message) {
 }
 
 /**
- * Проверяет, существует ли элемент в DOM
- * 
- * @param {string} selector - селектор
- * @returns {boolean} true, если существует
- */
-function isElementExists(selector) {
-    return selector.length > 0;
-}
-
-/**
  * Обновляет прогресс бар
  * @param {Object} message - сообщение
- * @param {number} account_id - идентификатор аккаунта
  * 
  */
-function updateProgressBar(message, account_id) {
-    // Контейнер
-    let accountProgressBarContainer = $('#progress-container-' + account_id);
-    // Label
-    let label = $('#plabel-' + account_id);
-    let progress_message = $('#progress-message-' + account_id);
+function updateProgressBar(message) {
+    // Прогресс бар
+    let progressBar = $('.progress-bar');
+    // Сообщение о прогрессе
+    let progress_message = $('#progress-message');
     // Идентификатор письма в БД
-    let db_message_id = extractMessageId(message)
+    let db_message_id = (message.total - message.email.message_id) + 1;
 
     if (message.percent) {
         const percentValue = parseFloat(message.percent); // Преобразуем строку в число
         const progressValue = 100 - percentValue; // Вычисляем значение для progressBar
 
-        accountProgressBarContainer.css('--percentage', progressValue); // Устанавливаем значение для progressBar
         // Устанавливаем значение для progressBar
-        // accountProgressBar.css('width', progressValue + '%').attr('aria-valuenow', progressValue); 
-        label.text(Math.ceil(progressValue) + '%');
-        // Устанавливаем значение для <p>
+        progressBar.css('width', progressValue + '%').attr('aria-valuenow', progressValue);
+        // Устанавливаем значение для <span>
         progress_message.text(db_message_id + ' из ' + (message.total + 1));
     }
 }
 
-function set_done(message, account_id) {
-    let accountProgressBarContainer = $('#progress-container-' + account_id);
-    let label = $('#plabel-' + account_id);
-    let progress_message = $('#progress-message-' + account_id);
+function setDone(message) {
+    let progressBar = $('.progress-bar');
+    let progress_message = $('#progress-message');
+    let total = message.total + 1;
 
-    accountProgressBarContainer.css('--percentage', message.percent);
-    label.text('100%');
-    progress_message.text(message.total + ' из ' + message.total);
+    progressBar.css('width', '100%').attr('aria-valuenow', 100);
+    progress_message.text(total + ' из ' + total);
 }
 
 /**
- * Скрывает контейнер с прогресс барами
- */
-function hideProgressBar() {
-    $('#progress-bar').hide();
-}
-
+ * Загружает сообщение в таблицу
+ * @param {Object} message - сообщение
+ * 
+*/
 function loadMessage(message) {
     // Идентификатор аккаунта электронной почты в БД
     let account_id = message.email.email_account
@@ -139,41 +123,53 @@ function loadMessage(message) {
     // Добавляем письмо в таблицу
     addEmailRow(emailsContainer, message);
     // Обновляем прогресс бар
-    updateProgressBar(message, account_id);
+    updateProgressBar(message);
 }
 
+/**
+ * Устанавливает статус прогресс бара
+ * @param {Object} message - сообщение
+ * 
+*/
+function setStatus(message) {
+    let status = $('#progress-status');
+    status.text(message.human_status);
+}
 
 const socket = createWebSocket('localhost', 8000, 'ws/emails/');
 
 
 // Соединение с сервером установлено
 socket.onopen = function(event) {
+    const url = window.location.href; // Получаем текущий URL
+    const lastSegment = url.split('/').pop(); // Разделяем по '/' и берем последний элемент
+
     console.log('Соединение установлено:', event);
-    sendAction(socket, 'start_imap_read');
+    sendAction(socket, 'start_imap_read', {"account_id": lastSegment});
 };
 
 // Получил сообщение от сервера
 socket.onmessage = function(event) {
     console.log('Получено сообщение', event);
     const message = parseMessage(event);
-    
+
     if (message.status === 'load') {
         console.log('JSON сообщение', message);
         loadMessage(message);
     } else if (message.status === 'done') {
         console.log('Все письма получены', message);
-        set_done(message, message.account_id);
+        setDone(message);
     }
+
+    setStatus(message);
 };
 
 // Соединение закрыто
 socket.onclose = function(event) {
     console.log('Соединение закрыто:', event);
-    hideProgressBar();
 };
 
 // Ошибка соединения
 socket.onerror = function(error) {
     console.error('Ошибка WebSocket:', error);
-    hideProgressBar();
 };
