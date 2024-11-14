@@ -9,10 +9,47 @@ from main.models import Account, Letter
 from main.services import IMAPService
 
 
-class EmailConsumer(AsyncWebsocketConsumer):
-    def percentage(self, value: int, total: int):
+class ConsumerUtils:
+    @staticmethod
+    def get_id(letter):
+        return int(letter.message_id)
+
+    @staticmethod
+    def percentage(value: int, total: int):
         result = (int(value) / total) * 100
         return f"{result:.2f}%"
+
+    @staticmethod
+    async def get_account(id: int):
+        return await Account.objects.aget(id=id)
+
+    @staticmethod
+    def get_letters(account):
+        return account.letter_set.filter(email_account_id = account.id)
+
+    @staticmethod
+    @sync_to_async
+    def get_range(account, length):
+        letters = ConsumerUtils.get_letters(account)
+        last = (
+            min(letters, key=lambda ltr: ConsumerUtils.get_id(ltr)) if letters else None
+        )
+
+        start = ConsumerUtils.get_id(last) - 1 if last else length
+        r = range(start, -1, -1)
+
+        if start <= 0:
+            return None
+
+        return r
+
+
+class EmailConsumer(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.loop = asyncio.get_event_loop()
+        self.tasks: set[asyncio.Task] = set()
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data is not None:
@@ -24,43 +61,54 @@ class EmailConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 print(f"Произошла ошибка: {e} {text_data=}")
                 raise
+    
+    async def disconnect(self, code):
+        print("Отменяю задачи...")
+        for task in self.tasks:
+            task.cancel()
 
     async def send_json(self, data: dict):
-        print(__file__, f"send_email({data=})")
-        await self.send(text_data=json.dumps(data))
+        try:
+            encoded = json.dumps(data)
+        except Exception as e:
+            print(f"Произошла ошибка: {e} {data=}")
+            raise
+        else:
+            await self.send(text_data=encoded)
+            print(f"Отправлено: {encoded}")
 
     async def handle_action(self, data: dict):
         action_type = data.get("action")
 
         if action_type == "start_imap_read":
-            await self.get_messages()
+            id = data.get("account_id")
+            await self.get_messages(account_id=id)
 
-    def get_id(self, letter):
-        ids = letter.message_id.split(".")
-        return int(ids[1])
-
-    @sync_to_async
-    def get_accounts(self):
-        return list(Account.objects.all())
-
-    @sync_to_async
-    def get_letters(self, account):
-        return account.letter_set.all()
-
-    @sync_to_async
-    def get_range(self, account, length):
-        letters = account.letter_set.all()
-        last = (
-            min(letters, key=lambda ltr: self.get_id(ltr)) if letters else None
-        )  # 2071
-
-        start = self.get_id(last) - 1 if last else length  # 2200
-        r = range(start, -1, -1)
-
-        if start <= 0:
-            return None
-
-        return r
+    async def connect_to_imap(self, account):
+        self.send_json({
+            "status": "connecting", 
+            "human_status": "Подключение..."
+        })
+        
+        imap = await IMAPService(
+            email=account.email,
+            password=account.password,
+            imap_server=account.imap_server,
+            imap_port=account.imap_port,
+        ).connect()
+        
+        if imap:
+            self.send_json({
+                "status": "connected", 
+                "human_status": "Подключено"
+            })
+            return imap
+        else:
+            self.send_json({
+                "status": "error",
+                "human_status": "Ошибка", 
+                "details": f"Не удалось подключиться к {account.email}"
+            })
 
     async def save(self, account):
         async def done():
@@ -68,59 +116,58 @@ class EmailConsumer(AsyncWebsocketConsumer):
             await self.send_json(
                 {
                     "status": "done",
+                    "human_status": "Все письма загружены", 
                     "total": total_emails,
                     "percent": 100,
                     "account_id": account.id,
                     "email": account.email,
                 }
             )
-
-        imap = await IMAPService(
-            email=account.email,
-            password=account.password,
-            imap_server=account.imap_server,
-            imap_port=account.imap_port,
-        ).connect()
-
+        
+        imap = await self.connect_to_imap(account)
         total_emails = await imap.get_total_count()
-        data_range = await self.get_range(account, total_emails)
+        
+        await self.send_json({"status": "reading", "human_status": "Чтение..."})
+        data_range = await ConsumerUtils.get_range(account, total_emails)
 
         if data_range:
-            await self.send_json({"status": f"{data_range=}"})
+            await self.send_json({
+                "status": "importing", 
+                "human_status": "Импортируем", 
+                "data_range": list(data_range)
+            })
             for email_id in data_range:
                 email_message = await imap.get_message(str(email_id))
-                percentage = self.percentage(email_message.id, total_emails)
+                if email_message:
+                    percentage = ConsumerUtils.percentage(email_message.id, total_emails)
 
-                message_id = f"{account.id}.{email_message.id}"
+                    letter = await Letter.objects.acreate(
+                        email_account_id=account.id,
+                        message_id=email_id,
+                        subject=email_message.subject,
+                        date_sent=email_message.date_sent,
+                        date_received=email_message.date_received,
+                        content=email_message.contents,
+                        attachments=email_message.attachments,
+                    )
 
-                letter = await Letter.objects.acreate(
-                    email_account_id=account.id,
-                    message_id=message_id,
-                    subject=email_message.subject,
-                    date_sent=email_message.date_sent,
-                    date_received=email_message.date_received,
-                    content=email_message.contents,
-                    attachments=email_message.attachments,
-                )
+                    send_data = {
+                        "status": "load",
+                        "human_status": "Загрузка...",
+                        "total": total_emails,
+                        "percent": percentage,
+                        "email": model_to_dict(letter),
+                    }
+                    await self.send_json(send_data)
+                
+        await done()
 
-                send_data = {
-                    "status": "load",
-                    "total": total_emails,
-                    "percent": percentage,
-                    "email": model_to_dict(letter),
-                }
-
-                await self.send_json(send_data)
-            await done()
-        else:
-            await done()
-
-    async def get_messages(self):
-        await self.send_json({"status": "pending..."})
-        accounts = await self.get_accounts()
-
-        loop = asyncio.get_event_loop()
-        tasks = [loop.create_task(self.save(a)) for a in accounts]
-
-        await asyncio.gather(*tasks)
+    async def get_messages(self, account_id):
+        await self.send_json({"status": "started", "human_status": "Подготовка...",})
+        account = await ConsumerUtils.get_account(account_id)
+        
+        task = self.loop.create_task(self.save(account))
+        self.tasks.add(task)
+        
+        await asyncio.gather(*self.tasks)
         await self.close()

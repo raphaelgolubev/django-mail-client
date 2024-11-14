@@ -15,7 +15,7 @@ class Letter(models.Model):
     """Модель электронного письма"""
 
     email_account = models.ForeignKey(Account, on_delete=models.CASCADE)
-    message_id = models.CharField(unique=True, max_length=20)
+    message_id = models.CharField(max_length=20)
     subject = models.TextField()
     date_sent = models.CharField(max_length=100)
     date_received = models.CharField(max_length=100)

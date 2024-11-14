@@ -77,7 +77,7 @@ class IMAPService:
         text = self.__get_plain_text(raw_email)
 
         if text:
-            truncated = utils.truncate_text(text, max_length=100)
+            truncated = utils.truncate_text(text, max_length=50)
             return utils.reduce_spaces(truncated)
 
         return "Нет содержания"
@@ -132,8 +132,8 @@ class IMAPService:
         imap_ssl = await self.__connect_imap()
         if imap_ssl:
             self.client = imap_ssl
-            return True
-        return False
+            return self
+        return None
 
     async def logout(self):
         print("Closing IMAP connection")
